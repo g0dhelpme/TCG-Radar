@@ -54,15 +54,11 @@ def load_previous_prices():
             return json.load(f)
     return {}
 
-def save_current_prices(prices_dict):
-    """Saves the current prices to be read during the next run."""
-    with open(STATE_FILE, 'w', encoding='utf-8') as f:
-        json.dump(prices_dict, f, indent=4)
 
 def send_telegram_alert(message):
     """Sends a push notification via Telegram Bot API."""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("Error: Telegram credentials not found.")
+        print("Error: Telegram credentials not found in environment variables.")
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -72,11 +68,17 @@ def send_telegram_alert(message):
         "parse_mode": "HTML"
     }
     try:
-        requests.post(url, json=payload)
-        print("Alert sent to Telegram!")
-    except Exception as e:
-        print(f"Failed to send Telegram message: {e}")
+        response = requests.post(url, json=payload)
 
+        # Check if Telegram actually accepted the message
+        if response.status_code == 200:
+            print("Alert successfully delivered to Telegram!")
+        else:
+            # If Telegram rejected it, print the exact reason why
+            print(f"Telegram rejected the message! Error: {response.text}")
+
+    except Exception as e:
+        print(f"Network error while contacting Telegram: {e}")
 
 def check_all_stock():
     previous_prices = load_previous_prices()
