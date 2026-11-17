@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright, TimeoutError
 
 # --- CONFIGURATION ---
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID"
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 STATE_FILE = "prices.json" #  file for prices comparison
 PRODUCTS_TO_TRACK = [
     {
