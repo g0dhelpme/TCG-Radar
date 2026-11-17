@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Přehled dostupnosti Pokémon TCG booster bundle a ETB v Česku.">
+    <title>TCG Radar · Pokémon sklad</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="TCG Radar domů"><span class="brand-mark">✦</span> TCG <strong>RADAR</strong></a>
+      <span class="location">🇨🇿 Česko <span class="live-dot"></span> živá kontrola</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">POKÉMON TCG · NÁKUPNÍ PŘEHLED</p>
+        <h1>Najdi produkty, když<br><em>je správný čas.</em></h1>
+        <p class="hero-copy">Sleduj dostupnost booster bundle a Elite Trainer Boxů u českých obchodů a nastav si vlastní cenový limit.</p>
+        <div class="stats" aria-label="Souhrn nabídky">
+          <div><strong id="product-count">0</strong><span>nabídek</span></div>
+          <div><strong id="in-stock-count">0</strong><span>skladem</span></div>
+          <div><strong id="watched-count">0</strong><span>sleduješ</span></div>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Filtrování nabídek">
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Hledat set nebo obchod…" autocomplete="off"></label>
+        <div class="filters">
+          <button class="filter active" data-stock="all">Vše</button>
+          <button class="filter" data-stock="in-stock">Skladem</button>
+          <button class="filter" data-stock="watching">Sleduji</button>
+          <select id="type-filter" aria-label="Typ produktu">
+            <option value="all">Všechny typy</option>
+            <option value="ETB">ETB</option>
+            <option value="Booster Bundle">Booster Bundle</option>
+          </select>
+          <select id="sort" aria-label="Řazení">
+            <option value="price">Nejnižší cena</option>
+            <option value="recent">Nejnovější kontrola</option>
+            <option value="name">Název A–Z</option>
+          </select>
+        </div>
+      </section>
+
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="products" class="product-grid" aria-live="polite"></section>
+      <p id="empty" class="empty" hidden>Žádná nabídka neodpovídá filtrům.</p>
+    </main>
+    <footer><span>TCG RADAR</span><span>Data jsou ukázková · ceny včetně DPH</span></footer>
+    <script src="app.js"></script>
+  </body>
+</html>
