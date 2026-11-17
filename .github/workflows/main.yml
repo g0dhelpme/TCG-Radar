@@ -2,8 +2,11 @@ name: TCG Stock Tracker
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Runs every 30 minutes
-  workflow_dispatch: # Allows manual triggering from the Actions tab
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write # IMPORTANT: This gives the bot permission to save the JSON file to your repo
 
 jobs:
   check-stock:
@@ -28,5 +31,13 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      # IMPORTANT: If your python file is not named tracker.py, change it here
-      run: python main.py
+      run: python main.py 
+
+    # NEW STEP: Commits the prices.json file back to the repository
+    - name: Save price data back to repository
+      run: |
+        git config --global user.name "GitHub Action Bot"
+        git config --global user.email "action@github.com"
+        git add prices.json
+        # Only commit and push if prices.json actually changed
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update prices memory" && git push)
