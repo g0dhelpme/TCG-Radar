@@ -5,20 +5,52 @@ from playwright.sync_api import sync_playwright, TimeoutError
 
 # --- CONFIGURATION ---
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID"
+STATE_FILE = "prices.json" #  file for prices comparison
 PRODUCTS_TO_TRACK = [
     {
-        "store": "Torédo",
-        "url": "https://www.toredo.cz/pokemon-booster-box-example/",
-        "selector": "button.add-to-cart" # Replace with actual Torédo button selector
+        "store": " - ETB",
+        "url": "https://www.digihry.sk/p-69636/pokemon-tcg-30th-celebration-elite-trainer-box-tcg",
+        "selector": "#kosik_add_button"
     },
     {
-        "store": "Najada",
-        "url": "https://www.najada.cz/cz/pokemon-booster-box-example/",
-        "selector": "#btn-buy" # Replace with actual Najada button selector
-    }
+        "store": "DIGIHRY - Bundle",
+        "url": "https://www.digihry.sk/p-69630/pokemon-tcg-30th-celebration-booster-bundle-tcg",
+        "selector": "#kosik_add_button"
+    },
+    {
+        "store": "Najada - Bundle",
+        "url": "https://www.najada.games/produkt/30th-celebration-booster-bundle-B6A4GP",
+        "selector": "div.Button.basket"
+    },
+    {
+        "store": "Najada - ETB",
+        "url": "https://www.najada.games/produkt/30th-celebration-elite-trainer-box-DJ8BID",
+        "selector": "div.Button.basket"
+    },
+    {
+        "store": "Sparkys - Bundle",
+        "url": "https://www.sparkys.cz/pokemon-tcg-30th-celebration-booster-bundle/",
+        "selector": "button.rf-Button--buy"
+    },
+    {
+        "store": "Sparkys - ETB",
+        "url": "https://www.sparkys.cz/pokemon-tcg-30th-celebration-elite-trainer-box/",
+        "selector": "button.rf-Button--buy"
+    },
 ]
 
+def load_previous_prices():
+    """Loads the saved prices from the last run."""
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+def save_current_prices(prices_dict):
+    """Saves the current prices to be read during the next run."""
+    with open(STATE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(prices_dict, f, indent=4)
 
 def send_telegram_alert(message):
     """Sends a push notification via Telegram Bot API."""
@@ -40,39 +72,75 @@ def send_telegram_alert(message):
 
 
 def check_all_stock():
-    """Loops through all stores and checks stock."""
+    previous_prices = load_previous_prices()
+    current_prices = previous_prices.copy()  # We will update this and save it later
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-
         page.set_extra_http_headers({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
         })
 
         for product in PRODUCTS_TO_TRACK:
-            print(f"Checking {product['store']}...")
+            store_name = product['store']
+            print(f"Checking {store_name}...")
+
             try:
                 page.goto(product['url'], timeout=30000)
-                page.wait_for_selector(product['selector'], state="visible", timeout=5000)
 
-                print(f"🚨 {product['store']} IS IN STOCK!")
-                send_telegram_alert(f"🚨 <b>{product['store']} IN STOCK</b> 🚨\n<a href='{product['url']}'>Buy Here</a>")
+                # First, try to read the current price
+                page.wait_for_selector(product['price_selector'], timeout=5000)
+                current_price_text = page.locator(product['price_selector']).inner_text().strip()
 
-            except TimeoutError:
-                print(f"{product['store']}: Out of stock (Buy button not found).")
+                # Check if the buy button is visible
+                try:
+                    page.wait_for_selector(product['button_selector'], state="visible", timeout=5000)
+                    is_in_stock = True
+                except TimeoutError:
+                    is_in_stock = False
+
+                if is_in_stock:
+                    last_price = previous_prices.get(store_name)
+
+                    # Scenario 1: Price has changed!
+                    if last_price and last_price != current_price_text:
+                        print(f"🚨 {store_name} Price Changed: {last_price} -> {current_price_text}")
+                        send_telegram_alert(
+                            f"📉 <b>PRICE CHANGE AT {store_name}</b> 📈\n\n"
+                            f"Old Price: <s>{last_price}</s>\n"
+                            f"New Price: <b>{current_price_text}</b>\n\n"
+                            f"<a href='{product['url']}'>Buy Here</a>"
+                        )
+
+                    # Scenario 2: It wasn't tracked before (or just came in stock), alert normal restock
+                    elif not last_price:
+                        print(f"🚨 {store_name} IN STOCK! Price: {current_price_text}")
+                        send_telegram_alert(
+                            f"🚨 <b>{store_name} IN STOCK</b> 🚨\n\n"
+                            f"Price: <b>{current_price_text}</b>\n"
+                            f"<a href='{product['url']}'>Buy Here</a>"
+                        )
+
+                    # Update our dictionary with the new price
+                    current_prices[store_name] = current_price_text
+
+                else:
+                    print(f"{store_name}: Out of stock.")
+                    # If out of stock, remove it from memory so it alerts freshly next time it restocks
+                    if store_name in current_prices:
+                        del current_prices[store_name]
+
             except Exception as e:
-                print(f"{product['store']} Page error: {e}")
+                print(f"{store_name} Page error: {e}")
 
-            # Pause for 3 seconds between websites so we don't get blocked
             time.sleep(3)
 
         browser.close()
 
-
-def main():
-    print("Starting TCG Restock Tracker...")
-    check_all_stock()
+    # Save the new prices to the JSON file before the script ends
+    save_current_prices(current_prices)
 
 
 if __name__ == "__main__":
-    main()
+    check_all_stock()
