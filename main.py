@@ -54,6 +54,10 @@ def load_previous_prices():
             return json.load(f)
     return {}
 
+def save_current_prices(prices_dict):
+    """Saves the current prices to be read during the next run."""
+    with open(STATE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(prices_dict, f, indent=4)
 
 def send_telegram_alert(message):
     """Sends a push notification via Telegram Bot API."""
