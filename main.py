@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import json
 from playwright.sync_api import sync_playwright, TimeoutError
 
 # --- CONFIGURATION ---
@@ -11,32 +12,38 @@ PRODUCTS_TO_TRACK = [
     {
         "store": " - ETB",
         "url": "https://www.digihry.sk/p-69636/pokemon-tcg-30th-celebration-elite-trainer-box-tcg",
-        "selector": "#kosik_add_button"
+        "button_selector": "#kosik_add_button",
+        "price_selector":"#main_price"
     },
     {
         "store": "DIGIHRY - Bundle",
         "url": "https://www.digihry.sk/p-69630/pokemon-tcg-30th-celebration-booster-bundle-tcg",
-        "selector": "#kosik_add_button"
+        "button_selector": "#kosik_add_button",
+        "price_selector":"#main_price"
     },
     {
         "store": "Najada - Bundle",
         "url": "https://www.najada.games/produkt/30th-celebration-booster-bundle-B6A4GP",
-        "selector": "div.Button.basket"
+        "button_selector": "div.Button.basket",
+        "price_selector":".mainPrice .value"
     },
     {
         "store": "Najada - ETB",
         "url": "https://www.najada.games/produkt/30th-celebration-elite-trainer-box-DJ8BID",
-        "selector": "div.Button.basket"
+        "button_selector": "div.Button.basket",
+        "price_selector":".mainPrice .value"
     },
     {
         "store": "Sparkys - Bundle",
         "url": "https://www.sparkys.cz/pokemon-tcg-30th-celebration-booster-bundle/",
-        "selector": "button.rf-Button--buy"
+        "button_selector": "button.rf-Button--buy",
+        "price_selector":".Product-priceFinal .rf-Price-content"
     },
     {
         "store": "Sparkys - ETB",
         "url": "https://www.sparkys.cz/pokemon-tcg-30th-celebration-elite-trainer-box/",
-        "selector": "button.rf-Button--buy"
+        "button_selector": "button.rf-Button--buy",
+        "price_selector":".Product-priceFinal .rf-Price-content"
     },
 ]
 
